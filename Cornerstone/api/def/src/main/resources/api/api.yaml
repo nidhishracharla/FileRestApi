@@ -1,0 +1,25 @@
+swagger: '2.0'
+info:
+  title: CoreDMS
+  version: 1.0.0
+  description: |-
+    Common DMS Service
+paths:
+  /v1/metadata:
+    post:
+      summary: Download file
+      parameters:
+        - in: body
+          name: downloadRequest
+          required: true
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/MetadataChangeRequest'
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/MetadataChangeResponse'
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error

@@ -1,0 +1,83 @@
+swagger: '2.0'
+info:
+  title: CoreDMS
+  version: 1.0.0
+  description: |-
+    Common DMS Service data definitions
+paths: {}
+definitions:
+  SearchIVO:
+    type: object
+    properties:
+      docType:
+        type: string   
+      metadata:      
+        type: object
+      additionalProperties: true
+             
+  SearchOVO:
+    type: object
+    properties:
+      metadataList:
+        type: object
+      additionalProperties: true
+      
+  DocumentIVO:
+    type: object
+    properties:
+      docType:
+        type: string      
+      docId:
+        type: string
+
+  DocumentOVO:
+    type: object
+    properties:
+      metadataList:
+        type: object
+      additionalProperties: true
+      
+  UpdateIVO:
+    type: object
+    properties:         
+      metadata:      
+        type: object
+      docId:
+        type: string      
+      additionalProperties: true
+      
+  MarkAsFinalIVO:
+    type: object
+    properties:         
+      metadata:      
+        type: object
+      docId:
+        type: string
+      docType:
+        type: string
+      retentionDate:
+        type: string
+      docSubType:
+          type: string
+      additionalProperties: true      
+ 
+  ExportManifestIVO:
+    type: object
+    properties:         
+      senderName:      
+        type: string
+      senderBusiness:
+        type: string
+      shippingMethod:
+        type: string
+      storerNum:
+        type: string
+      trackingNum:
+        type: string
+      businessLocation:
+        type: string
+      manifestSeqNum:
+        type: string
+      manifestInfo:
+        type: object     
+      additionalProperties: true

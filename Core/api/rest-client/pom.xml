@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.ge.capital.dms</groupId>
+        <artifactId>core-api</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>core-api-rest-client</artifactId>
+
+    <properties>
+        <swagger.codegen.language>springinterfaces</swagger.codegen.language>
+        <swagger.codegen.library>spring-boot</swagger.codegen.library>
+
+        <swagger.codegen.language>spring</swagger.codegen.language>
+		    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		    <java.version>1.8</java.version>
+        <version.swagger.codegen>2.3.1</version.swagger.codegen>
+        <swagger-annotations-version>1.5.8</swagger-annotations-version>
+        <jersey-version>2.22.2</jersey-version>
+            <jackson-version>2.9.5</jackson-version>
+            <jodatime-version>2.7</jodatime-version>
+            <maven-plugin-version>1.0.0</maven-plugin-version>
+            <junit-version>4.8.1</junit-version>
+            <okhttp-version>2.7.5</okhttp-version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.ge.capital.dms</groupId>
+            <artifactId>core-api-def</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ge.capital.dms</groupId>
+            <artifactId>core-api-rest</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!--Spring dependencies -->
+<!--
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>${jodatime-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.0.Final</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+    	<pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>api-def-copy</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>core-api-def</artifactId>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <includes>**/*.yaml</includes>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+          <plugin>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-codegen-maven-plugin</artifactId>
+                <version>${version.swagger.codegen}</version>
+                <configuration>
+                    <inputSpec>${project.build.directory}/api/api.yaml</inputSpec>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-swagger-javaclient</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <language>${swagger.codegen.language}</language>
+                            <library>${swagger.codegen.library}</library>
+
+                            <configOptions>
+                                <dateLibrary>joda</dateLibrary>
+                                <serviceName>core-dms</serviceName>
+                                <sourceFolder>/</sourceFolder>
+                            </configOptions>
+
+                            <generateApis>true</generateApis>
+                            <generateApiTests>true</generateApiTests>
+                            <generateModels>true</generateModels>
+                            <generateModelTests>true</generateModelTests>
+
+                            <modelPackage>${groupId}.model</modelPackage>
+                            <apiPackage>${groupId}.api</apiPackage>
+                            <invokerPackage>${groupId}.invoker</invokerPackage>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>target/generated-sources/swagger</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+        </plugins>
+        </pluginManagement>
+    </build>
+</project>

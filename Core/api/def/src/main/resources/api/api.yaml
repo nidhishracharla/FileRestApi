@@ -1,0 +1,145 @@
+swagger: '2.0'
+info:
+  title: CoreDMS
+  version: 1.0.0
+  description: |-
+    Common DMS Service
+paths:
+  /search/metadata:
+    post:
+      summary: search document metadata
+      parameters:
+        - in: body
+          name: metadata
+          required: true
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/SearchIVO'
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/SearchOVO'
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error
+
+paths:
+  /markasfinal/metadata:
+    post:
+      summary: update document's mark as final metadata
+      parameters:
+        - in: body
+          name: metadata
+          required: true          
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/MarkAsFinalIVO'
+      responses:
+        '200':
+          description: Success         
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error
+
+paths:
+  /update/metadata:
+    post:
+      summary: update document metadata
+      parameters:
+        - in: body
+          name: metadata
+          required: true          
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/UpdateIVO'
+      responses:
+        '200':
+          description: Success         
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error 
+
+paths:
+  /document/properties:
+    post:
+      summary: finds the document properties
+      parameters:
+        - in: body
+          name: metadata
+          required: true
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/DocumentIVO'
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/DocumentOVO'
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error           
+ 
+ 
+  /document/download:
+    post:
+      summary: download doucment from box
+      parameters:
+        - in: body
+          name: boxId
+          required: true
+          schema:
+           type: string
+           
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: file
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error      
+          
+  /document/upload:
+    post:
+      summary: uploads multiple doucments to box
+      consumes:
+         - multipart/form-data
+      parameters:         
+        - in: formData
+          name: files
+          type: file
+            
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: string
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error          
+
+paths:
+  /exportManifest/manifestInfo:
+    post:
+      summary: Export Manifest Details
+      parameters:
+        - in: body
+          name: manifestInfo
+          required: true          
+          schema:
+            $ref: './core_dms_definitions.yaml#/definitions/ExportManifestIVO'
+      responses:
+        '200':
+          description: Success         
+        '401':
+          description: Authentication failed
+        '500':
+          description: Unexpected error 
+                    
+          
+    
+          
+          

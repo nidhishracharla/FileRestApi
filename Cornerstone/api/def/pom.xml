@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.ge.capital.dms</groupId>
+        <artifactId>cornerstone-api</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>cornerstone-api-def</artifactId>
+    <packaging>jar</packaging>
+    <properties>
+        <swagger.codegen.language>spring</swagger.codegen.language>
+		    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		    <java.version>1.8</java.version>
+        <version.swagger.codegen>2.3.1</version.swagger.codegen>
+        <swagger-annotations-version>1.5.8</swagger-annotations-version>
+        <jersey-version>2.22.2</jersey-version>
+            <jackson-version>2.9.5</jackson-version>
+            <jodatime-version>2.7</jodatime-version>
+            <maven-plugin-version>1.0.0</maven-plugin-version>
+            <junit-version>4.8.1</junit-version>
+            <okhttp-version>2.7.5</okhttp-version>
+    </properties>
+
+    <dependencies>
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-starter-web</artifactId>
+        <version>2.0.2.RELEASE</version>
+  		</dependency>
+
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-starter-test</artifactId>
+        <version>2.0.2.RELEASE</version>
+  			<scope>test</scope>
+  		</dependency>
+          <dependency>
+              <groupId>com.squareup.okhttp</groupId>
+              <artifactId>okhttp</artifactId>
+              <version>${okhttp-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.squareup.okhttp</groupId>
+              <artifactId>logging-interceptor</artifactId>
+              <version>${okhttp-version}</version>
+          </dependency>
+
+          <dependency>
+              <groupId>com.google.code.gson</groupId>
+              <artifactId>gson</artifactId>
+              <version>2.8.5</version>
+          </dependency>
+          <dependency>
+              <groupId>io.gsonfire</groupId>
+              <artifactId>gson-fire</artifactId>
+              <version>1.8.3</version>
+          </dependency>
+
+          <dependency>
+              <groupId>io.swagger</groupId>
+              <artifactId>swagger-annotations</artifactId>
+              <version>${swagger-annotations-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>io.springfox</groupId>
+              <artifactId>springfox-swagger2</artifactId>
+              <version>2.7.0</version>
+          </dependency>
+          <dependency>
+              <groupId>io.springfox</groupId>
+              <artifactId>springfox-swagger-ui</artifactId>
+              <version>2.7.0</version>
+          </dependency>
+          <!-- You can find the dependencies for the library configuation you chose by looking in JavaClientCodegen.
+               Then find the corresponding dependency on Maven Central, and set the versions in the property section below -->
+
+          <!-- HTTP client: jersey-client -->
+          <dependency>
+              <groupId>org.glassfish.jersey.core</groupId>
+              <artifactId>jersey-client</artifactId>
+              <version>${jersey-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>org.glassfish.jersey.media</groupId>
+              <artifactId>jersey-media-json-jackson</artifactId>
+              <version>${jersey-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>org.glassfish.jersey.media</groupId>
+              <artifactId>jersey-media-multipart</artifactId>
+              <version>${jersey-version}</version>
+          </dependency>
+
+          <!-- JSON processing: jackson -->
+          <dependency>
+              <groupId>com.fasterxml.jackson.jaxrs</groupId>
+              <artifactId>jackson-jaxrs-base</artifactId>
+              <version>${jackson-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.fasterxml.jackson.core</groupId>
+              <artifactId>jackson-core</artifactId>
+              <version>${jackson-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.fasterxml.jackson.core</groupId>
+              <artifactId>jackson-annotations</artifactId>
+              <version>${jackson-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.fasterxml.jackson.core</groupId>
+              <artifactId>jackson-databind</artifactId>
+              <version>${jackson-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>com.fasterxml.jackson.jaxrs</groupId>
+              <artifactId>jackson-jaxrs-json-provider</artifactId>
+              <version>${jackson-version}</version>
+          </dependency>
+
+          <!-- Joda time: if you use it -->
+          <dependency>
+              <groupId>com.fasterxml.jackson.datatype</groupId>
+              <artifactId>jackson-datatype-joda</artifactId>
+              <version>${jackson-version}</version>
+          </dependency>
+          <dependency>
+              <groupId>joda-time</groupId>
+              <artifactId>joda-time</artifactId>
+              <version>${jodatime-version}</version>
+          </dependency>
+
+          <!-- Base64 encoding that works in both JVM and Android -->
+          <dependency>
+              <groupId>com.brsanthu</groupId>
+              <artifactId>migbase64</artifactId>
+              <version>2.2</version>
+          </dependency>
+  	</dependencies>
+    <build>
+    <pluginManagement> <!-- changes by kiran -->
+  		<plugins>
+              <plugin>
+                  <groupId>io.swagger</groupId>
+                  <artifactId>swagger-codegen-maven-plugin</artifactId>
+                  <version>${version.swagger.codegen}</version>
+                 <configuration>
+
+                      <inputSpec>src/main/resources/api/api.yaml</inputSpec>
+                  </configuration>
+                  <executions>
+                      <execution>
+                          <id>generate-swagger-javaclient</id>
+                          <phase>generate-sources</phase>
+                          <goals>
+                              <goal>generate</goal>
+                          </goals>
+                          <configuration>
+                  
+                              <language>${swagger.codegen.language}</language>
+
+                              <configOptions>
+                                  <dateLibrary>joda</dateLibrary>
+                              </configOptions>
+
+                              <generateApis>true</generateApis>
+                              <generateApiTests>true</generateApiTests>
+                              <generateModels>true</generateModels>
+                              <generateModelTests>true</generateModelTests>
+
+                              <modelPackage>${groupId}.model</modelPackage>
+                              <apiPackage>${groupId}.api</apiPackage>
+                              <invokerPackage>${groupId}.invoker</invokerPackage>
+                           
+                          </configuration>
+                      </execution>
+                  </executions>
+              </plugin>
+              <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>build-helper-maven-plugin</artifactId>
+                  <version>1.9.1</version>
+                  <executions>
+                      <!-- TODO for eclipse/m2e users: install the m2e connector 'buildhelper' by selecting 'Discover new m2e connectors' while hovering over the follwoing execution tag -->
+                      <execution>
+                          <id>add-generated-source</id>
+                          <phase>initialize</phase>
+                          <goals>
+                              <goal>add-source</goal>
+                          </goals>
+                          <configuration>
+                              <sources>
+                                  <source>target/java</source>
+                              </sources>
+                          </configuration>
+                      </execution>
+                  </executions>
+              </plugin>
+              <plugin>
+  				<groupId>org.springframework.boot</groupId>
+  				<artifactId>spring-boot-maven-plugin</artifactId>
+  			</plugin>
+  		<!-- </plugins>
+								changes by kiran
+          <pluginManagement>
+              <plugins> -->
+                  <plugin>
+                      <groupId>org.eclipse.m2e</groupId>
+                      <artifactId>lifecycle-mapping</artifactId>
+                      <version>1.0.0</version>
+                      <configuration>
+                          <lifecycleMappingMetadata>
+                              <pluginExecutions>
+                                  <pluginExecution>
+                                      <pluginExecutionFilter>
+                                          <groupId>io.swagger</groupId>
+                                          <artifactId>swagger-codegen-maven-plugin</artifactId>
+                                          <versionRange>[${version.swagger.codegen},)</versionRange>
+                                          <goals>
+                                              <goal>generate</goal>
+                                          </goals>
+                                      </pluginExecutionFilter>
+                                      <action>
+                                          <execute />
+                                      </action>
+                                  </pluginExecution>
+                              </pluginExecutions>
+                          </lifecycleMappingMetadata>
+                      </configuration>
+                  </plugin>
+              </plugins>
+          </pluginManagement>
+  	</build>
+
+</project>

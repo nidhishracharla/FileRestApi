@@ -1,0 +1,25 @@
+swagger: '2.0'
+info:
+  title: CoreDMS
+  version: 1.0.0
+  description: |-
+    Common DMS Service data definitions
+paths: {}
+definitions:
+  MetadataChangeRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      createdate:
+        type: string
+        format: date
+
+  MetadataChangeResponse:
+    type: object
+    properties:
+      name:
+        type: string
+      createdate:
+        type: string
+        format: date

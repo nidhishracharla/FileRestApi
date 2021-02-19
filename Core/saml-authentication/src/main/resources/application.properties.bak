@@ -1,0 +1,107 @@
+logging.level.org.springframework.security=DEBUG
+spring.profiles.active=local
+spring.http.multipart.max-file-size=-1
+spring.http.multipart.max-request-size=-1
+
+spring.datasource.url=jdbc:sqlserver://G2422USQWSQL03P.logon.ds.ge.com:2439;databaseName=HEFBoxDMS;integratedSecurity=true;
+spring.datasource.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+spring.datasource.testWhileIdle = true
+spring.datasource.timeBetweenEvictionRunsMillis = 34000
+spring.datasource.minEvictableIdleTimeMillis = 55000
+spring.datasource.validationQuery = SELECT 1
+spring.datasource.validationInterval = 34000
+
+#Tomcat connection pool
+spring.datasource.type = org.apache.tomcat.jdbc.pool.DataSource
+spring.datasource.tomcat.initial-size=34
+spring.datasource.tomcat.max-wait=20000
+spring.datasource.tomcat.max-active=377
+spring.datasource.tomcat.max-idle=233
+spring.datasource.tomcat.min-idle=89
+spring.datasource.tomcat.default-auto-commit=true  
+spring.datasource.tomcat.test-on-borrow=false
+spring.datasource.tomcat.InactiveConnectionTimeoutSeconds=30000
+
+spring.jpa.show-sql=true
+spring.jpa.generate-ddl=false
+spring.jpa.hibernate.ddl-auto=false
+spring.jpa.hibernate.naming-strategy=org.hibernate.cfg.ImprovedNamingStrategy
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.SQLServer2012Dialect
+
+#web server
+server.port=9191
+server.contextPath=/api
+
+#custom keys
+upload.rootFolderId=55532162174
+upload.partyFolderId=61506024930
+upload.accountFolderId=61497329493
+upload.opportunityFolderId=61506862394
+upload.ctrtFolderId=62303517083
+upload.locFolderId=61497543335
+
+upload.corptaxRootFolderId=59897540711
+
+upload.corptaxAKFolderId=62795358698
+upload.corptaxALFolderId=62793975713
+upload.corptaxARFolderId=62793996617
+upload.corptaxAZFolderId=62795293263
+upload.corptaxCAFolderId=62793878590
+upload.corptaxCOFolderId=62793327649
+upload.corptaxCTFolderId=62795141234
+upload.corptaxDCFolderId=62794134099
+upload.corptaxFLFolderId=62794169490
+upload.corptaxGAFolderId=62793449277
+upload.corptaxHIFolderId=62793579782
+upload.corptaxIAFolderId=62796040057
+upload.corptaxIDFolderId=62795664887
+upload.corptaxILFolderId=62795723837
+upload.corptaxINFolderId=62795735274
+upload.corptaxKSFolderId=62793662034
+upload.corptaxKYFolderId=62794195318
+upload.corptaxLAFolderId=62794350846
+upload.corptaxMAFolderId=62794392345
+upload.corptaxMDFolderId=62795812305
+upload.corptaxMEFolderId=62794417062
+upload.corptaxMIFolderId=62794258099
+upload.corptaxMNFolderId=62794127558
+upload.corptaxMOFolderId=62794078492
+upload.corptaxMSFolderId=62794251987
+upload.corptaxMTFolderId=62794369066
+upload.corptaxNCFolderId=62794327262
+upload.corptaxNDFolderId=62793475055
+upload.corptaxNEFolderId=62794327938
+upload.corptaxNHFolderId=62794240814
+upload.corptaxNJFolderId=62794505862
+upload.corptaxNMFolderId=62795939764
+upload.corptaxNVFolderId=62796138277
+upload.corptaxNYFolderId=62794174435
+upload.corptaxOHFolderId=62795844664
+upload.corptaxOKFolderId=62794295084
+upload.corptaxORFolderId=62794258081
+upload.corptaxPAFolderId=62796100561
+upload.corptaxRIFolderId=62796206677
+upload.corptaxSCFolderId=62794488143
+upload.corptaxSDFolderId=62794338361
+upload.corptaxTNFolderId=62793819234
+upload.corptaxTXFolderId=62796176087
+upload.corptaxUTFolderId=62794578333
+upload.corptaxVAFolderId=62796339398
+upload.corptaxVTFolderId=62793834066
+upload.corptaxWAFolderId=62793386329
+upload.corptaxWIFolderId=62796583232
+upload.corptaxWVFolderId=62794426500
+upload.corptaxWYFolderId=62796361975
+upload.path=D:\\Cornerstone-Box\\Artifacts\\Saml-auth\\upload
+download.path=D:\\Cornerstone-Box\\Artifacts\\Saml-auth\\download
+
+#upload folder-paths:
+upload.max.file.count=10
+upload.folderPath.corptax=CommonDMSContentStore\\CorpTax
+upload.folderPath.lockbox.cashmedia=CommonDMSContentStore\\Lockbox\\CashMedia
+#upload.folderPath.lockbox.wireslb=
+#upload.folderPath.lockbox.pnc=
+upload.folderPath.exportManifest=CommonDMSContentStore\\IFLeasingDocs\\DST-Manifest
+upload.folderPath.dealDoc=CommonDMSContentStore\\IFLeasingDocs\\DealDocs
+upload.folderPath.reports.cash=CommonDMSContentStore\\Reports\\Cash_Reports
+upload.folderPath.reports.check=CommonDMSContentStore\\Reports\\Check_Transmission_Reports

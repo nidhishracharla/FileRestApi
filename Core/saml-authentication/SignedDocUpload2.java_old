@@ -1,0 +1,567 @@
+package com.ge.capital.dms.fr.sle.controllers.api;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.InetSocketAddress;
+import java.net.Proxy.Type;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import org.apache.log4j.Logger;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.box.sdk.BoxAPIConnection;
+import com.box.sdk.BoxAPIException;
+import com.box.sdk.BoxFile;
+import com.box.sdk.BoxFolder;
+import com.box.sdk.BoxItem;
+import com.ge.capital.dms.dao.UpdateDAO;
+import com.ge.capital.dms.entity.DocSubtype;
+import com.ge.capital.dms.entity.DocuSignMessageStatus;
+import com.ge.capital.dms.fr.sle.config.DecodeSSO;
+import com.ge.capital.dms.model.FileMetadata;
+import com.ge.capital.dms.repository.UploadLOCRepository;
+import com.ge.capital.dms.service.SelectService;
+import com.ge.capital.dms.service.UpdateService;
+import com.ge.capital.dms.utility.DmsUtilityService;
+import com.ge.capital.dms.utility.EmailNotificationUtil;
+
+/**
+ * @author GJ00557822
+ */
+@CrossOrigin(origins = "*")
+@RestController
+@RequestMapping("/secure")
+public class SignedDocUpload2 {
+	private static final Logger logger = Logger.getLogger(SignedDocUpload2.class);
+
+	@Autowired
+	SelectService selectService;
+
+	@Autowired
+	DmsUtilityService dmsUtilityService;
+	
+	@Autowired
+	MultiFileUploadController multiFileUploadController;
+	
+	@Autowired
+	UploadLOCRepository uploadLOCRepository;
+
+	@Value("${download.path}")
+	private String DIRECTORY;
+
+	@Value("#{${DocuSign.DocSubtype.Keyword}}")
+	private Map<String, String> strDocuSignKeywords;
+
+	@Autowired
+	EmailPackageController emailPackageController;
+
+	@Autowired
+	DecodeSSO decodeSSO;
+
+	@Autowired
+	UpdateService updateService;
+
+	@Autowired
+	EmailNotificationUtil emailNotificationUtil;
+
+	@RequestMapping(value = "/docuSignUpload", method = RequestMethod.POST)
+	public Object uploadSigned(HttpServletRequest request, @FormDataParam("files") MultipartFile[] files,
+			@FormDataParam("docType") String docType, @FormDataParam("fileMetadata") FileMetadata fileMetadata) {
+
+		Map<String, String> finalPackMetadata = new HashMap<String, String>();
+
+		HashMap<String, String> Metadata = new HashMap<String, String>();
+		String respWelcome = "";
+		String strSequenceNum = "";
+		String strOpportunityID = "";
+		BoxAPIConnection api = null;
+		decodeSSO.getDecodedSSO(request.getHeader("loggedinuser"));
+		List<DocuSignMessageStatus> noofEnvelopes=new ArrayList<>();
+		try {
+			String[] updateMetadataStrArray = fileMetadata.getUploadMetadata().split("},");
+			// String[] updateMetadataStrArray1 = updateMetadataStrArray;
+			for (int i = 0; i < updateMetadataStrArray.length - 1; i++) {
+				updateMetadataStrArray[i] = updateMetadataStrArray[i] + "}";
+			}
+			// SgnedUserEmail new key
+			JSONParser parser = new JSONParser();
+			for (String keyValue : updateMetadataStrArray) {
+				JSONObject json = (JSONObject) parser.parse(keyValue);
+				for (Object key : json.keySet()) {
+					String metaKey = (String) key;
+					String metaValue = "";
+					if (json.get(metaKey).getClass() == (java.lang.Long.class)) {
+						metaValue = (String) json.get(metaKey).toString();
+					} else {
+						metaValue = (String) json.get(metaKey);
+					}
+					logger.info(metaKey + " " + metaValue);
+					Metadata.put(metaKey, metaValue);
+				}
+			}
+			String creator = "";
+			// String ContractNumber = finalPackMetadata.get("lwContractSequenceNumber");
+			String email = Metadata.get("SignedUserEmail");
+			/*
+			 * if (null != finalPackMetadata.get("signedUser")) creator =
+			 * finalPackMetadata.get("signedUser"); else
+			 */
+			creator = selectService.getUserId(email);
+
+			strSequenceNum = Metadata.get("lwContractSequenceNumber");
+			strOpportunityID = Metadata.get("OpportunityID");
+
+			HashSet<String> NotAvailableSet = new HashSet();
+			NotAvailableSet.add("NA");
+			NotAvailableSet.add("N/A");
+			NotAvailableSet.add("na");
+			NotAvailableSet.add("n/a");
+			NotAvailableSet.add("notavailable");
+			NotAvailableSet.add("not available");
+			NotAvailableSet.add("Not Available");
+			NotAvailableSet.add("NOT AVAILABLE");
+
+			// if(!strSequenceNum.equalsIgnoreCase("NA") &&
+			// strOpoortunityID.equalsIgnoreCase("NA"))
+			// finalPackMetadata = selectService.getDocMetadata(strSequenceNum);
+			// else if (!strOpoortunityID.equalsIgnoreCase("NA") &&
+			// strSequenceNum.equalsIgnoreCase("NA") )
+			// finalPackMetadata =
+			// selectService.getDocMetadataforOpportunityID(strOpoortunityID);
+			// else if (!strOpoortunityID.equalsIgnoreCase("NA") &&
+			// !strSequenceNum.equalsIgnoreCase("NA") )
+			// finalPackMetadata =
+			// selectService.getDocMetadata(strSequenceNum,strOpoortunityID);
+
+			if (!NotAvailableSet.contains(strSequenceNum) && NotAvailableSet.contains(strOpportunityID)) {
+				finalPackMetadata = selectService.getDocMetadata(strSequenceNum);
+				this.logger.info("block 1 : " + strSequenceNum + " " + strOpportunityID);
+			} else if (!NotAvailableSet.contains(strOpportunityID) && NotAvailableSet.contains(strSequenceNum)) {
+				finalPackMetadata = selectService.getDocMetadataforOpportunityID(strOpportunityID);
+				finalPackMetadata.put("legalEntityType", "Opportunity");
+				this.logger.info("block 2 : " + strSequenceNum + " " + strOpportunityID);
+			} else if (!NotAvailableSet.contains(strOpportunityID) && !NotAvailableSet.contains(strSequenceNum)) {
+				finalPackMetadata = selectService.getDocMetadata(strSequenceNum, strOpportunityID);
+				this.logger.info("block 3 : " + strSequenceNum + " " + strOpportunityID);
+			}
+
+			finalPackMetadata.putAll(Metadata);
+			
+			String strEnvelopeId= Metadata.get("EnvelopeID")!=null?Metadata.get("EnvelopeID"):"";
+			String strFilename= Metadata.get("Filename")!=null?Metadata.get("Filename"):"";
+			
+			DocuSignMessageStatus docuSignMessageStatus = new DocuSignMessageStatus();
+			docuSignMessageStatus.setDocId("");
+			//docuSignMessageStatus.setSno(0);
+			docuSignMessageStatus.setEnvelopeId(strEnvelopeId);
+			docuSignMessageStatus.setDocusignFilename(strFilename);
+			docuSignMessageStatus.setDocusignStatus("");
+			docuSignMessageStatus.setErrorMessage("");
+			docuSignMessageStatus.setCreatedBy(Metadata.get("signedUser")!=null?Metadata.get("signedUser"):"");
+			docuSignMessageStatus.setCreatedDate(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+			docuSignMessageStatus.setModifiedBy("");
+			docuSignMessageStatus.setModifiedDate("");
+			//docuSignMessageStatus.setLegalentitytype(finalPackMetadata.get("legalEntityType")!=null?finalPackMetadata.get("legalEntityType"): "");
+			docuSignMessageStatus.setLegalentitytype("");
+			
+			updateService.insertDocuSignStatus(docuSignMessageStatus);
+			this.logger.info("docuSignMessageStatus values are : "+docuSignMessageStatus.toString());
+			
+			
+			// finalPackMetadata =
+			// selectService.getDocMetadata(finalPackMetadata.get("lwContractSequenceNumber"));
+			logger.info("first display: " + finalPackMetadata);
+
+			Set<String> keywordSet = strDocuSignKeywords.keySet();
+			List<DocuSignMessageStatus> envelopes=null;
+			noofEnvelopes= selectService.getAllEnvelopes(strEnvelopeId);
+			if(!noofEnvelopes.isEmpty() && noofEnvelopes.size()>0) {
+				envelopes= noofEnvelopes.stream().filter(envelope ->envelope.getDocusignFilename().equalsIgnoreCase(strFilename)).collect(Collectors.toList());
+			}
+			String strLegalEntityType="";
+			String strdocId="";
+			 for(DocuSignMessageStatus envelope : envelopes) {
+				 strLegalEntityType =  envelope.getLegalentitytype();
+				 strdocId= envelope.getDocId();
+			 }
+			if (null == finalPackMetadata.get("legalEntityType") || finalPackMetadata.size() == 0
+					|| finalPackMetadata.get("legalEntityType").equalsIgnoreCase("NoMetadata")) {
+				// finalPackMetadata.put("docSubType", "Executed_DocuSign_NoMetadata");
+				finalPackMetadata.put("legalEntityType", "NoMetadata");
+			}
+			
+			String strDestinationfldr= getDestinationFolder(finalPackMetadata.get("legalEntityType"), finalPackMetadata);
+			if (strLegalEntityType=="NoMetadata" && finalPackMetadata.get("legalEntityType") !="NoMetadata") {
+				if (strdocId != null && !(strdocId.equals(""))) {
+					String boxToken = dmsUtilityService.requestAccessToken();
+					this.logger.info("token recevied is : " + boxToken);
+					if (!boxToken.isEmpty()) {
+						api = new BoxAPIConnection(boxToken);
+						 java.net.Proxy proxy = new java.net.Proxy(Type.HTTP, new
+						 InetSocketAddress("PITC-Zscaler-Americas-Cincinnati3PR.proxy.corporate.ge.com", 80));
+						 api.setProxy(proxy);
+						try {
+							BoxFile file = new BoxFile(api, strdocId);
+							BoxFolder Destinationfolder = new BoxFolder(api, strDestinationfldr);
+							file.move(Destinationfolder);
+							file.getInfo().getModifiedAt();
+							Map<String, String> inputMetadataMap = new HashMap();
+							inputMetadataMap.put("modifyDate", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+									.format(file.getInfo().getModifiedAt()));
+							updateService.updateMetadata(strdocId, inputMetadataMap);
+							this.logger.info("uploaded the versioned doc usccessfully ");
+						} catch (BoxAPIException e) {
+							e.printStackTrace();
+							logger.error("Failed to upload into the Box due to  : " + e.getMessage());
+						}
+					}
+				}
+			}
+
+			// finalPackMetadata.put("lwContractSequenceNumber",
+			// finalPackMetadata.get("lwContractSequenceNumber"));
+			
+			finalPackMetadata.put("sourceSystem", "DocuSign");
+			finalPackMetadata.put("physicalStorageStatus", "0");
+			finalPackMetadata.put("syndicationPackage", "0");
+			finalPackMetadata.put("creator", creator);
+			//finalPackMetadata.put("sfdcOpportunityId", strOpportunityID);
+			finalPackMetadata.put("SignedUserEmail", email);
+			// finalPackMetadata.put("docSubType", "Executed_Docusign");
+			// finalPackMetadata.put("legalEntityType", "");
+
+			List<DocSubtype> docsubtypes = selectService.getAllDocSubtypes();
+			this.logger.info("Subtpes keywords are:  ");
+			//docsubtypes.stream().filter(docsubtype -> docsubtype.getKeyword() != null).forEach(System.out::println);
+			
+			this.logger.info("\n");
+			logger.info(finalPackMetadata);
+			for (MultipartFile multipartFile : files) {
+				finalPackMetadata.put(" ", multipartFile.getOriginalFilename());
+				logger.info(multipartFile.getOriginalFilename() + ": " + multipartFile.getContentType());
+				this.logger.info("filename :" + multipartFile.getOriginalFilename());
+				if (finalPackMetadata.get("docSubType") == null
+						&& !finalPackMetadata.get("legalEntityType").equalsIgnoreCase("NoMetadata")) {
+					String filename = multipartFile.getOriginalFilename();
+					List<DocSubtype> matchfound = docsubtypes.stream().filter(
+							docSubtype -> docSubtype.getKeyword() != null && filename.contains(docSubtype.getKeyword()))
+							.collect(Collectors.toList());
+					if (matchfound != null && matchfound.size() == 1) {
+						for (DocSubtype docsubtypemetadata : matchfound) {
+							finalPackMetadata.put("docSubType", docsubtypemetadata.getSubtype());
+							finalPackMetadata.put("welcomePackage", docsubtypemetadata.getIncludeWelcomepkg());
+							finalPackMetadata.put("finalPackage", docsubtypemetadata.getIncludeTiaapkg());
+							if(filename.contains("HEF0059")) {
+								finalPackMetadata.put("legalEntityType", "Party");								
+							}else {
+								finalPackMetadata.put("legalEntityType", docsubtypemetadata.getPrimaryEntitytype());
+							}
+						}
+					} else if (matchfound != null && matchfound.size() > 1) {
+						this.logger
+						.error("SignedDocUpload.uploadSigned: More than 1 keyword exists in the document name");
+						this.logger.error("Document name : " + multipartFile.getOriginalFilename());
+						for (DocSubtype docsubtypemetadata : matchfound) {
+							this.logger.error(" keyword: " + docsubtypemetadata.getKeyword());
+						}
+					} else if (matchfound.isEmpty() && filename.contains("HEF0038")) {
+						finalPackMetadata.put("docSubType", "Contract Executed Package");
+						finalPackMetadata.put("welcomePackage", "1");
+						finalPackMetadata.put("finalPackage", "1");
+						finalPackMetadata.put("legalEntityName", "Contract");
+					}
+				}
+				String filepath = DIRECTORY + "\\" + multipartFile.getOriginalFilename();
+				File uploadFile = new File(filepath);
+				File uploadfile = new File(filepath);
+				multipartFile.transferTo(uploadfile);
+				respWelcome += emailPackageController.uploadDocument(request, multipartFile.getOriginalFilename(),
+						finalPackMetadata, finalPackMetadata.get("docSubType"));
+				this.logger.info("response received from DMS upload is : " + respWelcome);
+				if (respWelcome.contains("already been uploaded")) {
+					this.logger.info("file already exists in the box ");
+					String docId = selectService.isFileExists(multipartFile.getOriginalFilename());
+					this.logger.info("DocId received from the DB is : " + docId);
+					if (docId != null && !(docId.equals(""))) {
+						String boxToken = dmsUtilityService.requestAccessToken();
+						this.logger.info("token recevied is : " + boxToken);
+						if (!boxToken.isEmpty()) {
+							api = new BoxAPIConnection(boxToken);
+							 java.net.Proxy proxy = new java.net.Proxy(Type.HTTP, new
+							 InetSocketAddress("PITC-Zscaler-Americas-Cincinnati3PR.proxy.corporate.ge.com", 80));
+							 api.setProxy(proxy);
+							try {
+								BoxFile file = new BoxFile(api, docId);
+								FileInputStream stream = new FileInputStream(uploadfile);
+								file.uploadVersion(stream);// Uploads a new version of this file, replacing the current
+								// version. Note that only users with premium accounts will
+								// be able to view and recover previous versions of the
+								// file.
+								file.getInfo().getModifiedAt();
+								Map<String, String> inputMetadataMap = new HashMap();
+								inputMetadataMap.put("modifyDate", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+										.format(file.getInfo().getModifiedAt()));
+								updateService.updateMetadata(docId, inputMetadataMap);
+								this.logger.info("uploaded the versioned doc usccessfully ");
+							} catch (BoxAPIException e) {
+								e.printStackTrace();
+								logger.error("Failed to upload into the Box due to  : " + e.getMessage());
+							}
+						}
+					}
+				}
+
+			}
+
+			// audit table update
+		} catch (Exception e) {// com.microsoft.sqlserver.jdbc.SQLServerException: The column name
+			// include_tiaapkg is not valid.
+			logger.error(e.getMessage(), e);
+			respWelcome = e.getMessage();
+		}
+
+		return respWelcome;
+
+	}
+	
+	public String getDestinationFolder(String legalEntityType, Map<String, String> finalPackMetadata) {
+		String boxToken = dmsUtilityService.requestAccessToken();
+		BoxAPIConnection api = new BoxAPIConnection(boxToken);
+		String entityTypeNumBoxId = null;
+		if (legalEntityType.equals("Party")) {
+			/*
+			 * BoxFolder.Info partyFolderInfo = parentFolder1.createFolder("Party10");
+			 * entityTypeBoxId = partyFolderInfo.getID();
+			 */
+
+			/* BoxFolder partyFolder = new BoxFolder(api, entityTypeBoxId); */
+			String subFolderName = null;
+			boolean flag = false;
+			boolean partyNumFolderExists = false;
+
+			BoxFolder partyfolder = new BoxFolder(api, multiFileUploadController.UPLD_PA_FLDR_ID);
+
+			for (BoxItem.Info itemInfo : partyfolder) {
+				if (flag == false) {
+					if (itemInfo instanceof BoxFolder.Info) {
+						partyNumFolderExists = true;
+						subFolderName = (itemInfo.getName());
+						BoxFolder.Info partyFolderInfo = (BoxFolder.Info) itemInfo;
+
+						BoxFolder partyNumfolder = new BoxFolder(api, partyFolderInfo.getID());
+
+						if (subFolderName.equals("PA_" + finalPackMetadata.get("partyNumber"))) {
+							entityTypeNumBoxId = partyNumfolder.getID();
+
+							flag = true;
+							break;
+						} else {
+							partyNumFolderExists = false;
+						}
+
+					}
+				}
+			}
+
+			if (partyNumFolderExists == false) {
+				BoxFolder partyFolder = new BoxFolder(api, partyfolder.getID());
+
+				BoxFolder.Info partychildFolderInfo = partyFolder
+						.createFolder("PA_" + finalPackMetadata.get("partyNumber"));
+				entityTypeNumBoxId = partychildFolderInfo.getID();
+
+			}
+
+		}
+
+		if (legalEntityType.equals("Account")) {
+
+			String subFolderName = null;
+			boolean flag = false;
+			boolean accNumFolderExists = false;
+
+			BoxFolder accfolder = new BoxFolder(api, multiFileUploadController.UPLD_ACC_FLDR_ID);
+
+			for (BoxItem.Info itemInfo : accfolder) {
+				if (flag == false) {
+					if (itemInfo instanceof BoxFolder.Info) {
+						accNumFolderExists = true;
+						subFolderName = (itemInfo.getName());
+						BoxFolder.Info partyFolderInfo = (BoxFolder.Info) itemInfo;
+
+						BoxFolder partyNumfolder = new BoxFolder(api, partyFolderInfo.getID());
+
+						if (subFolderName.equals("AC_" + finalPackMetadata.get("sfdcAccountId"))) {
+							entityTypeNumBoxId = partyNumfolder.getID();
+
+							flag = true;
+							break;
+						} else {
+							accNumFolderExists = false;
+						}
+
+					}
+				}
+			}
+
+			if (accNumFolderExists == false) {
+				BoxFolder accFolder = new BoxFolder(api, accfolder.getID());
+
+				BoxFolder.Info accchildFolderInfo = accFolder
+						.createFolder("AC_" + finalPackMetadata.get("sfdcAccountId"));
+				entityTypeNumBoxId = accchildFolderInfo.getID();
+
+			}
+
+		}
+
+		if (legalEntityType.equals("Opportunity")) {
+
+			String subFolderName = null;
+			boolean flag = false;
+			boolean oppNumFolderExists = false;
+
+			BoxFolder oppfolder = new BoxFolder(api, multiFileUploadController.UPLD_OPP_FLDR_ID);
+
+			for (BoxItem.Info itemInfo : oppfolder) {
+				if (flag == false) {
+					if (itemInfo instanceof BoxFolder.Info) {
+						oppNumFolderExists = true;
+						subFolderName = (itemInfo.getName());
+						BoxFolder.Info oppFolderInfo = (BoxFolder.Info) itemInfo;
+
+						BoxFolder oppNumfolder = new BoxFolder(api, oppFolderInfo.getID());
+
+						if (subFolderName.equals("OP_" + finalPackMetadata.get("sfdcopportunityId"))) {
+							entityTypeNumBoxId = oppNumfolder.getID();
+
+							flag = true;
+							break;
+						} else {
+							oppNumFolderExists = false;
+						}
+
+					}
+				}
+			}
+
+			if (oppNumFolderExists == false) {
+				BoxFolder oppFolder = new BoxFolder(api, oppfolder.getID());
+
+				BoxFolder.Info oppChildFolderInfo = oppFolder
+						.createFolder("OP_" + finalPackMetadata.get("sfdcopportunityId"));
+				entityTypeNumBoxId = oppChildFolderInfo.getID();
+
+			}
+
+		}
+
+		if (legalEntityType.equals("LOC")) {
+			if (finalPackMetadata.get("sfdcopportunityId") != null
+					|| finalPackMetadata.get("sfdcopportunityId") != "") {
+				// DB Logic for updating credit number and opportunity ID if provided
+				uploadLOCRepository.updateLocOppotunityID(finalPackMetadata.get("lineofcreditNumber"),
+						finalPackMetadata.get("sfdcopportunityId"));
+			}
+
+			String subFolderName = null;
+			boolean flag = false;
+			boolean locNumFolderExists = false;
+
+			BoxFolder locfolder = new BoxFolder(api, multiFileUploadController.UPLD_LOC_FLDR_ID);
+
+			for (BoxItem.Info itemInfo : locfolder) {
+				if (flag == false) {
+					if (itemInfo instanceof BoxFolder.Info) {
+						locNumFolderExists = true;
+						subFolderName = (itemInfo.getName());
+						BoxFolder.Info locFolderInfo = (BoxFolder.Info) itemInfo;
+
+						BoxFolder locNumfolder = new BoxFolder(api, locFolderInfo.getID());
+
+						if (subFolderName.equals("LC_" + finalPackMetadata.get("lineofcreditNumber"))) {
+							entityTypeNumBoxId = locNumfolder.getID();
+
+							flag = true;
+							break;
+						} else {
+							locNumFolderExists = false;
+						}
+
+					}
+				}
+			}
+
+			if (locNumFolderExists == false) {
+				BoxFolder locFolder = new BoxFolder(api, locfolder.getID());
+
+				BoxFolder.Info locChildFolderInfo = locFolder
+						.createFolder("LC_" + finalPackMetadata.get("lineofcreditNumber"));
+				entityTypeNumBoxId = locChildFolderInfo.getID();
+
+			}
+
+		}
+
+		if (legalEntityType.equalsIgnoreCase("Contract")) {
+
+			String subFolderName = null;
+			boolean flag = false;
+			boolean ctrtNumFolderExists = false;
+
+			BoxFolder ctrtfolder = new BoxFolder(api, multiFileUploadController.UPLD_CTRT_FLDR_ID);
+			for (BoxItem.Info itemInfo : ctrtfolder) {
+				if (flag == false) {
+					if (itemInfo instanceof BoxFolder.Info) {
+						ctrtNumFolderExists = true;
+						subFolderName = (itemInfo.getName());
+						BoxFolder.Info ctrtFolderInfo = (BoxFolder.Info) itemInfo;
+
+						BoxFolder ctrtNumfolder = new BoxFolder(api, ctrtFolderInfo.getID());
+
+						if (subFolderName.equals("CT_" + finalPackMetadata.get("lwSeqNumber"))) {
+							entityTypeNumBoxId = ctrtNumfolder.getID();
+							this.logger.info("ContractNumberFolder BoxID is " + entityTypeNumBoxId);
+							flag = true;
+							break;
+						} else {
+							ctrtNumFolderExists = false;
+						}
+
+					}
+				}
+			}
+
+			if (ctrtNumFolderExists == false) {
+				BoxFolder partyFolder = new BoxFolder(api, ctrtfolder.getID());
+
+				BoxFolder.Info partychildFolderInfo = partyFolder
+						.createFolder("CT_" + finalPackMetadata.get("lwSeqNumber").trim());
+				entityTypeNumBoxId = partychildFolderInfo.getID();
+
+			}
+
+		}
+
+	return entityTypeNumBoxId;
+	}
+}

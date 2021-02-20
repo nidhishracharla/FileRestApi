@@ -5,4 +5,5 @@ stage('project checkout'){
 stage('compile-package'){
     cmd "mvn install"
  } 
+  
 }

@@ -210,6 +210,7 @@ public class SearchDAO {
 			em.close();
 		}
 		return resultMetadataList;
+	
 	}
 
 	@Transactional

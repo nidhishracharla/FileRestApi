@@ -3,6 +3,6 @@ stage('project checkout'){
   git "https://github.com/nidhishracharla/FileRestApi"
 }
 stage('compile-package'){
-    cmd "mvn package"
+    cmd "mvn install"
  } 
 }

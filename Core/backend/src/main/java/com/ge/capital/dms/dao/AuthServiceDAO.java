@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @EnableTransactionManagement
 public class AuthServiceDAO {
 	
+	
+	
 	@PersistenceUnit
 	private EntityManagerFactory emf;
 

@@ -1,9 +1,9 @@
 node{
 stage('project checkout'){
-  git 'https://github.com/nidhishracharla/FileRestApi'
+  git branch: 'main', poll: false, url: 'https://github.com/nidhishracharla/FileRestApi.git'
 }
 stage('compile-package'){
-    cmd "mvn install"
- } 
+    sh 'mvn install'
+} 
   
 }

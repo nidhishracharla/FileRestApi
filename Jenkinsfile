@@ -4,7 +4,7 @@ stage('project checkout'){
 }
 stage('compile-package'){
     def mavenhome= tool name: 'MyMaven', type: 'maven'
-  bat "${mavenhome}/bin/mvn install DskipTests"
+  bat "${mavenhome}/bin/mvn install -DskipTests"
 } 
   
 }

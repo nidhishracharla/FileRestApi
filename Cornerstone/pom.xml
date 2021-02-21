@@ -30,8 +30,8 @@
     <description>Cornerstone DMS application</description>
 
   <modules>
-    <module>api</module>
+    <!--<module>api</module>
     <module>backend</module>
     <module>frontend</module>
-  </modules>
+  </modules>-->
 </project>
